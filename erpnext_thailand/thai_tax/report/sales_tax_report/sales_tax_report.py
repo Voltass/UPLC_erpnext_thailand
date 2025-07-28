@@ -111,7 +111,7 @@ def get_data(filters):
 
 	query = (
 		frappe.qb.from_(tinv)
-		.left_join(sinv).on(sinv.name == tinv.voucher_no),
+		.left_join(sinv).on(sinv.name == tinv.voucher_no)
 		.left_join(cust).on(cust.name == tinv.party)
 		.left_join(addr).on(addr.name == cust.customer_primary_address)
 		.left_join(comp).on(comp.name == tinv.company)
