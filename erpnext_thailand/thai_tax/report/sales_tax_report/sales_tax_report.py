@@ -87,6 +87,12 @@ def get_columns():
 			"options": "voucher_type",
 			"width": 200,
 		},
+		{
+			"label": _("Remarks"),
+			"fieldname": "remarks",
+			"fieldtype": "Data",
+			"width": 200,
+		},
 	]
 
 
@@ -139,7 +145,8 @@ def get_data(filters):
 			tinv.voucher_no.as_("voucher_no"),
 			comp.company_name.as_("company_name"),
 			comp.tax_id.as_("company_tax_id"),
-			addr.branch_code.as_("branch_code")
+			addr.branch_code.as_("branch_code"),
+			tinv.remarks.as_("remarks")
 		)
 		.where(tinv.docstatus.isin([1, 2]))
 		.orderby(tinv.name)
