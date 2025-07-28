@@ -98,7 +98,7 @@ def get_columns():
 
 def get_data(filters):
 	tinv = frappe.qb.DocType("Sales Tax Invoice")
-	sinv = frappe.qb.DocType("Sales Invoice")  # ✅ new
+	sinv = frappe.qb.DocType("Sales Invoice")
 	cust = frappe.qb.DocType("Customer")
 	addr = frappe.qb.DocType("Address")
 	comp = frappe.qb.DocType("Company")
@@ -111,7 +111,7 @@ def get_data(filters):
 
 	query = (
 		frappe.qb.from_(tinv)
-		.left_join(sinv).on(sinv.name == tinv.voucher_no)  # ✅ join to Sales Invoice
+		.left_join(sinv).on(sinv.name == tinv.voucher_no),
 		.left_join(cust).on(cust.name == tinv.party)
 		.left_join(addr).on(addr.name == cust.customer_primary_address)
 		.left_join(comp).on(comp.name == tinv.company)
@@ -138,7 +138,7 @@ def get_data(filters):
 			comp.company_name.as_("company_name"),
 			comp.tax_id.as_("company_tax_id"),
 			addr.branch_code.as_("branch_code"),
-			sinv.remarks.as_("remarks")  # ✅ pull remarks from Sales Invoice
+			sinv.remarks.as_("remarks"),
 		)
 		.where(tinv.docstatus.isin([1, 2]))
 		.orderby(tinv.name)
