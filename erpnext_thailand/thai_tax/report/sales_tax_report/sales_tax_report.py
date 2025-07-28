@@ -139,10 +139,12 @@ def get_data(filters):
 			comp.tax_id.as_("company_tax_id"),
 			addr.branch_code.as_("branch_code"),
 			Case()
-    			.when(tinv.voucher_no.like("ACC-PSINV%"),
-          			concat("รวมใบกำกับภาษีอย่างย่อ (ABB): ", tinv.voucher_no))
-    			.else_(sinv.remarks)
-    			.as_("remarks"),
+				.when(
+					(sinv.remarks.like("รวมใบกำกับภาษีอย่างย่อ (ABB):%")) & (tinv.docstatus == 1),
+					sinv.remarks
+	)
+	.else_("").as_("remarks"),
+
 		)
 		.where(tinv.docstatus.isin([1, 2]))
 		.orderby(tinv.name)
