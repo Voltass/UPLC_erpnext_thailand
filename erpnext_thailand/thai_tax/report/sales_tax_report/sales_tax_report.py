@@ -97,12 +97,13 @@ def get_columns():
 
 
 def get_data(filters):
-
 	tinv = frappe.qb.DocType("Sales Tax Invoice")
+	sinv = frappe.qb.DocType("Sales Invoice")  # ✅ new
 	cust = frappe.qb.DocType("Customer")
 	addr = frappe.qb.DocType("Address")
 	comp = frappe.qb.DocType("Company")
 	addr_company = addr.as_("company_address")
+
 	round = CustomFunction("round", ["value", "digit"])
 	month = CustomFunction("month", ["date"])
 	year = CustomFunction("year", ["date"])
@@ -110,14 +111,11 @@ def get_data(filters):
 
 	query = (
 		frappe.qb.from_(tinv)
-		.left_join(cust)
-		.on(cust.name == tinv.party)
-		.left_join(addr)
-		.on(addr.name == cust.customer_primary_address)
-		.left_join(comp)
-		.on(comp.name == tinv.company)
-		.left_join(addr_company)
-		.on(addr_company.name == tinv.company_tax_address)
+		.left_join(sinv).on(sinv.name == tinv.voucher_no)  # ✅ join to Sales Invoice
+		.left_join(cust).on(cust.name == tinv.party)
+		.left_join(addr).on(addr.name == cust.customer_primary_address)
+		.left_join(comp).on(comp.name == tinv.company)
+		.left_join(addr_company).on(addr_company.name == tinv.company_tax_address)
 		.select(
 			tinv.company_tax_address.as_("company_tax_address"),
 			addr_company.address_line1.as_("company_address_line1"),
@@ -129,24 +127,18 @@ def get_data(filters):
 			addr_company.branch_code.as_("company_branch_code"),
 			tinv.report_date.as_("report_date"),
 			tinv.date.as_("date"),
-			Case()
-			.when(tinv.docstatus == 1, tinv.name)
-			.else_(concat(tinv.name, " (CANCEL)"))
-			.as_("name"),
+			Case().when(tinv.docstatus == 1, tinv.name).else_(concat(tinv.name, " (CANCEL)")).as_("name"),
 			tinv.party_name.as_("party_name"),
 			cust.tax_id.as_("tax_id"),
 			Case().when(tinv.docstatus == 1, round(tinv.tax_base, 2)).else_(0).as_("tax_base"),
-			Case()
-			.when(tinv.docstatus == 1, round(tinv.tax_amount, 2))
-			.else_(0)
-			.as_("tax_amount"),
+			Case().when(tinv.docstatus == 1, round(tinv.tax_amount, 2)).else_(0).as_("tax_amount"),
 			tinv.tax_percent.as_("tax_percent"),
 			tinv.voucher_type.as_("voucher_type"),
 			tinv.voucher_no.as_("voucher_no"),
 			comp.company_name.as_("company_name"),
 			comp.tax_id.as_("company_tax_id"),
 			addr.branch_code.as_("branch_code"),
-			tinv.remarks.as_("remarks")
+			sinv.remarks.as_("remarks")  # ✅ pull remarks from Sales Invoice
 		)
 		.where(tinv.docstatus.isin([1, 2]))
 		.orderby(tinv.name)
@@ -167,5 +159,4 @@ def get_data(filters):
 		query = query.where(tinv.company_tax_address == filters.get("company_tax_address"))
 
 	result = query.run(as_dict=True)
-
 	return result
